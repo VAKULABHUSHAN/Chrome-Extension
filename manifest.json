@@ -3,9 +3,10 @@
   "name": "TruthLens",
   "version": "1.0",
   "description": "Detect fake news, images, and source credibility",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "scripting", "storage", "contextMenus"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "action": {
     "default_popup": "popup.html"

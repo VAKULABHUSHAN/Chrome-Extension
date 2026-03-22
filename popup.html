@@ -1,15 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>TruthLens</title>
+  <meta charset="utf-8">
+  <title>TruthLens AI</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
-    <h2>TruthLens</h2>
-    <p id="status">Loading...</p>
-    <button id="toggle">Toggle</button>
+    <div class="header">
+      <h2>TruthLens AI</h2>
+    </div>
+    
+    <div class="api-settings">
+      <input type="password" id="api-key" placeholder="Hugging Face API Token">
+      <button id="save-key" class="btn-secondary">Save</button>
+    </div>
+
+    <div class="input-section">
+      <textarea id="text-input" placeholder="Paste text here to analyze..." rows="5"></textarea>
+    </div>
+
+    <div class="actions">
+      <button id="btn-summarize" class="btn-primary">Summarize</button>
+      <button id="btn-explain" class="btn-primary">Explain (ELI5)</button>
+      <button id="btn-sentiment" class="btn-primary">Sentiment</button>
+    </div>
+
+    <div class="results-section">
+      <div id="loading" class="hidden">
+        <div class="spinner"></div> AI is thinking...
+      </div>
+      <div id="result-box" class="hidden">
+        <p id="result-text"></p>
+        <button id="btn-copy" class="btn-secondary">Copy</button>
+      </div>
+      <div id="error-box" class="hidden">
+        <p id="error-text"></p>
+      </div>
+    </div>
   </div>
-  <script src="popup.js"></script>
+  <script src="popup.js" type="module"></script>
 </body>
 </html>
