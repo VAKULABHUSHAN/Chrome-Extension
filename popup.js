@@ -1,8 +1,6 @@
 import { analyzeText } from './api/huggingface.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const apiKeyInput = document.getElementById("api-key");
-  const saveKeyBtn = document.getElementById("save-key");
   const textInput = document.getElementById("text-input");
   
   const btnSummarize = document.getElementById("btn-summarize");
@@ -16,18 +14,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   const errorText = document.getElementById("error-text");
   const btnCopy = document.getElementById("btn-copy");
 
-  // Load saved API key
-  const storage = await chrome.storage.local.get("hfApiKey");
-  if (storage.hfApiKey) {
-    apiKeyInput.value = storage.hfApiKey;
-  }
+  const liveToggle = document.getElementById("live-toggle");
 
-  saveKeyBtn.addEventListener("click", async () => {
-    const key = apiKeyInput.value.trim();
-    if (key) {
-      await chrome.storage.local.set({ hfApiKey: key });
-      saveKeyBtn.innerText = "Saved!";
-      setTimeout(() => saveKeyBtn.innerText = "Save", 2000);
+  // Load existing toggle state
+  const state = await chrome.storage.local.get("liveAnalysisEnabled");
+  liveToggle.checked = !!state.liveAnalysisEnabled;
+
+  liveToggle.addEventListener("change", async (e) => {
+    const enabled = e.target.checked;
+    await chrome.storage.local.set({ liveAnalysisEnabled: enabled });
+    
+    // tell active tab
+    const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+    if (tab) {
+      chrome.tabs.sendMessage(tab.id, { type: "TOGGLE_LIVE_ANALYSIS", enabled }).catch(() => console.log("Content script not active"));
     }
   });
 
@@ -38,19 +38,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const key = apiKeyInput.value.trim();
-    if (!key) {
-      showError("Please enter and save your Hugging Face API key.");
-      return;
-    }
-
     // UI State
     hideError();
     hideResult();
     showLoading();
 
     try {
-      const result = await analyzeText(text, type, key);
+      const result = await analyzeText(text, type);
       showResult(result);
     } catch (err) {
       showError(err.message);

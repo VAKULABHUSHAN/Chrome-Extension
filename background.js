@@ -1,4 +1,4 @@
-import { analyzeText } from './api/huggingface.js';
+import { analyzeText, analyzeImage } from './api/huggingface.js';
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -23,12 +23,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   chrome.tabs.sendMessage(tab.id, { type: "TRUTHLENS_LOADING" }).catch(() => {});
 
   try {
-    const storage = await chrome.storage.local.get("hfApiKey");
-    if (!storage.hfApiKey) {
-      throw new Error("Please enter your Hugging Face API Key in the TruthLens popup.");
-    }
-
-    const result = await analyzeText(text, type, storage.hfApiKey);
+    const result = await analyzeText(text, type);
     
     // Send result to content script to display
     chrome.tabs.sendMessage(tab.id, {
@@ -41,5 +36,30 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       type: "TRUTHLENS_ERROR",
       payload: error.message
     }).catch(() => {});
+  }
+});
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === "ANALYZE_PAGE") {
+    // We do the HF analysis here to avoid CORS from content.js
+    (async () => {
+      let textRes = null;
+      let imgRes = null;
+      
+      try {
+        if (msg.payload.text) {
+          textRes = await analyzeText(msg.payload.text, "fake_news");
+        }
+      } catch (e) { textRes = { error: e.message }; }
+
+      try {
+        if (msg.payload.imageUrl) {
+          imgRes = await analyzeImage(msg.payload.imageUrl);
+        }
+      } catch (e) { imgRes = { error: e.message }; }
+
+      sendResponse({ textAnalysis: textRes, imageAnalysis: imgRes });
+    })();
+    return true; // async response
   }
 });
